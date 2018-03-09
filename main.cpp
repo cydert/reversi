@@ -23,6 +23,7 @@ void showBoard(ull value) {
         cout << "\n";
         i -= 8;
     }
+    cout << "\n";
 }
 
 class Board {
@@ -64,6 +65,53 @@ public:
         uint8_t m = myBoard << 1;
         uint8_t e = enemyBoard;
         return ((ull) (~(m | e) & ~(myBoard | enemyBoard) & (m + e))) << ((8 * y));
+    }
+
+    //右から左にみて置ける場所を探索
+    ull getPutRtoL(ull myBoard, ull enemyBoard) {
+        ull sum = 0;
+        for (int i = 0; i < 8; i++) {
+            sum = sum | getPutLine(myBoard, enemyBoard, i);
+        }
+        return sum;
+    }
+
+    //斜め方向のおける場所
+    ull getPutSlash(ull myBoard, ull enemyBoard) {
+        ull sum = 0;
+        // 右上方向
+        ull masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
+        ull t = masked_enemy & (myBoard << 7);
+        for (int i = 0; i < 5; i++) {
+            t |= masked_enemy & (t << 7);
+        }
+        sum |= (t << 7);
+
+        // 左上方向
+        masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
+        t = masked_enemy & (myBoard << 9);
+        for (int i = 0; i < 5; i++) {
+            t |= masked_enemy & (t << 9);
+        }
+        sum |= (t << 9);
+
+        // 右下方向
+        masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
+        t = masked_enemy & (myBoard >> 9);
+        for (int i = 0; i < 5; i++) {
+            t |= masked_enemy & (t >> 9);
+        }
+        sum |= (t >> 9);
+
+        // 左下方向
+        masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
+        t = masked_enemy & (myBoard >> 7);
+        for (int i = 0; i < 5; i++) {
+            t |= masked_enemy & (t >> 7);
+        }
+        sum |= (t >> 7);
+
+        return sum & getFree();
     }
 
     ull rotation(ull x) {
@@ -115,37 +163,137 @@ public:
         return flipDiagA1H8(flipVertical(x));
     }
 
+    ull rotation180(ull x) {
+        const ull h1 = 0x5555555555555555;
+        const ull h2 = 0x3333333333333333;
+        const ull h4 = 0x0F0F0F0F0F0F0F0F;
+        const ull v1 = 0x00FF00FF00FF00FF;
+        const ull v2 = 0x0000FFFF0000FFFF;
+        x = ((x >> 1) & h1) | ((x & h1) << 1);
+        x = ((x >> 2) & h2) | ((x & h2) << 2);
+        x = ((x >> 4) & h4) | ((x & h4) << 4);
+        x = ((x >> 8) & v1) | ((x & v1) << 8);
+        x = ((x >> 16) & v2) | ((x & v2) << 16);
+        x = (x >> 32) | (x << 32);
+        return x;
+    }
 
-    //自分を黒としたときのおける場所
+
+    //自分を黒としたときのおける場所(8方向
     ull getPutBlack() {
         ull sum = 0ull;
-        for (int i = 0; i < 8; i++) {
-            sum = sum | getPutLine(black, white, i);
-        }
-/*
+        //4方向
+        sum = sum | getPutRtoL(black, white);
         //回転
-        ull black2 = rotation(black);
-        ull white2 = rotation(white);
-        for (int i = 0; i < 8; i++) {
-            sum = sum | getPutLine(black2, white2, i);
-        }*/
-        return sum;// & (getFree());
+        ull black2 = black;
+        ull white2 = white;
+        for (int i = 0; i < 3; i++) {
+            black2 = rotationR90(black2);
+            white2 = rotationR90(white2);
+            if (i == 0) {
+                sum = sum | rotationL90(getPutRtoL(black2, white2));
+            } else if (i == 1) {
+                sum = sum | rotation180(getPutRtoL(black2, white2));
+            } else if (i == 2) {
+                sum = sum | rotationR90(getPutRtoL(black2, white2));
+            }
+        }
+        return sum | getPutSlash(black, white);//8方向
     }
 
     //自分を白としたときのおける場所
     ull getPutWhite() {
-        ull sum = 0;
-        for (int i = 0; i < 8; i++) {
-            sum = sum | getPutLine(white, black, i);
-        }
-        /*
+        ull sum = 0ull;
+        //4方向
+        sum = sum | getPutRtoL(white, black);
         //回転
-        ull black2 = (((black >> 3) | (black << 3)) & 63) ^56;
-        ull white2 = (((black >> 3) | (black << 3)) & 63) ^56;
-        for (int i = 0; i < 8; i++) {
-            sum = sum | getPutLine(white2, black2, i);
-        }*/
-        return sum & (getFree());
+        ull black2 = black;
+        ull white2 = white;
+        for (int i = 0; i < 3; i++) {
+            black2 = rotationR90(black2);
+            white2 = rotationR90(white2);
+            if (i == 0) {
+                sum = sum | rotationL90(getPutRtoL(white2, black2));
+            } else if (i == 1) {
+                sum = sum | rotation180(getPutRtoL(white2, black2));
+            } else if (i == 2) {
+                sum = sum | rotationR90(getPutRtoL(white2, black2));
+            }
+        }
+        return sum | getPutSlash(white, black);//8方向
+    }
+
+    //石を反転させる
+    //posで置く場所指定
+    ull makeReverse(ull myBoard, ull enemyBoard, ull pos) {
+        int i;
+        ull mask, rev = 0, rev_cand;
+
+        // 右方向
+        rev_cand = 0;
+        mask = 0x7e7e7e7e7e7e7e7e;
+        for (i = 1; ((pos >> i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos >> i);
+        }
+        if (((pos >> i) & myBoard) != 0) rev |= rev_cand;
+
+        // 左方向
+        rev_cand = 0;
+        mask = 0x7e7e7e7e7e7e7e7e;
+        for (i = 1; ((pos << i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos << i);
+        }
+        if (((pos << i) & myBoard) != 0) rev |= rev_cand;
+
+        // 上方向
+        rev_cand = 0;
+        mask = 0x00ffffffffffff00;
+        for (i = 1; ((pos << 8 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos << 8 * i);
+        }
+        if (((pos << 8 * i) & myBoard) != 0) rev |= rev_cand;
+
+        // 下方向
+        rev_cand = 0;
+        mask = 0x00ffffffffffff00;
+        for (i = 1; ((pos >> 8 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos >> 8 * i);
+        }
+        if (((pos >> 8 * i) & myBoard) != 0) rev |= rev_cand;
+
+        // 右上方向
+        rev_cand = 0;
+        mask = 0x007e7e7e7e7e7e00;
+        for (i = 1; ((pos << 7 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos << 7 * i);
+        }
+        if (((pos << 7 * i) & myBoard) != 0) rev |= rev_cand;
+
+        // 左上方向
+        rev_cand = 0;
+        mask = 0x007e7e7e7e7e7e00;
+        for (i = 1; ((pos << 9 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos << 9 * i);
+        }
+        if (((pos << 9 * i) & myBoard) != 0) rev |= rev_cand;
+
+        // 右下方向
+        rev_cand = 0;
+        mask = 0x007e7e7e7e7e7e00;
+        for (i = 1; ((pos >> 9 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos >> 9 * i);
+        }
+        if (((pos >> 9 * i) & myBoard) != 0) rev |= rev_cand;
+
+        // 左下方向
+        rev_cand = 0;
+        mask = 0x007e7e7e7e7e7e00;
+        for (i = 1; ((pos >> 7 * i) & mask & enemyBoard) != 0; i++) {
+            rev_cand |= (pos >> 7 * i);
+        }
+        if (((pos >> 7 * i) & myBoard) != 0) rev |= rev_cand;
+
+        return rev;
     }
 
     ull cntBits(ull bits) {
@@ -187,9 +335,10 @@ int main() {
     showBoard(board->black);
     //showBit(board->getPutLine(board->black, board->white, 7));
     cout << endl;
-    showBoard(board->rotationR90(board->black));
 
-    //showBit(board->getPutBlack());
+    showBoard(board->getPutBlack());
+
+    showBoard(board->makeReverse(board->black, board->white, 0x0000000000000008));
 
     return 0;
 }

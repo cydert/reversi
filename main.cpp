@@ -27,6 +27,7 @@ void showBoard(ull value) {
 }
 
 class Board {
+
 public:
     bool blackTurn = true;  //通常黒から
     int nowTurn;
@@ -34,6 +35,27 @@ public:
 
     ull black;
     ull white;
+    ull canBlackBoard = 0, canWhiteBoard = 0;
+
+
+    void reloadCanBoard() {
+        canBlackBoard = getPutBlack();
+        canWhiteBoard = getPutWhite();
+    }
+
+    void nextTurn() {
+        nowTurn++;
+        nowIdx++;
+        if (black | white == ULLONG_MAX) {
+            cout << "fin" << endl;
+        }
+
+        if (blackTurn) {
+            blackTurn = false;
+        } else {
+            blackTurn = true;
+        }
+    }
 
     //石が置かれてない場所を返す
     ull getFree() {
@@ -52,11 +74,11 @@ public:
             cout << "err" << endl;
             return 0ull;
         }
-        return (ull) 1 << (8-x + 56-y*8-1);
+        return (ull) 1 << (8 - x + 56 - y * 8 - 1);
     }
 
     ull makeBoard(char x, int y) {
-        if (x < 'a' || x > 'h' || y < 1 || y > 8){
+        if (x < 'a' || x > 'h' || y < 1 || y > 8) {
             cout << "err" << endl;
             return 0ull;
         }
@@ -358,11 +380,13 @@ int main() {
     showBoard(board->black);
     //showBit(board->getPutLine(board->black, board->white, 7));
     cout << endl;
+    board->reloadCanBoard();
 
     showBoard(board->getPutBlack());
     board->putBlack(0x0000000000000008);
     showBoard(board->white);
-    showBoard(board->makeBoard('a',1));
+    showBoard(board->makeBoard('a', 1));
+
     return 0;
 }
 //https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating

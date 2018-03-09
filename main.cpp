@@ -48,11 +48,19 @@ public:
     //指定した座標を1にして返す
     //左上(0,0)→右上(0,7)
     ull makeBoard(int x, int y) {
-        return (ull) 1 << (x + y * 8);
+        if (x < 0 || x > 7 || y < 0 || y > 7) {
+            cout << "err" << endl;
+            return 0ull;
+        }
+        return (ull) 1 << (8-x + 56-y*8-1);
     }
 
-    bool canPut(ull piece) {
-
+    ull makeBoard(char x, int y) {
+        if (x < 'a' || x > 'h' || y < 1 || y > 8){
+            cout << "err" << endl;
+            return 0ull;
+        }
+        return makeBoard(x - 'a', y - 1);
     }
 
     //y列目のおける場所
@@ -296,6 +304,21 @@ public:
         return rev;
     }
 
+    //石の設置（リバースあり,チェック無し
+    void putBlack(ull pos) {
+        ull putBoard = makeReverse(black, white, pos);
+        black |= putBoard | pos;
+        white ^= putBoard;
+    }
+
+    //石の設置（リバースあり,チェック無し
+    void putWhite(ull pos) {
+        ull putBoard = makeReverse(white, black, pos);
+        white |= putBoard | pos;
+        black ^= putBoard;
+    }
+
+
     ull cntBits(ull bits) {
         unsigned long long m[] = {
                 0x5555555555555555ULL,
@@ -337,9 +360,9 @@ int main() {
     cout << endl;
 
     showBoard(board->getPutBlack());
-
-    showBoard(board->makeReverse(board->black, board->white, 0x0000000000000008));
-
+    board->putBlack(0x0000000000000008);
+    showBoard(board->white);
+    showBoard(board->makeBoard('a',1));
     return 0;
 }
 //https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating

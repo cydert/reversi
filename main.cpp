@@ -1,6 +1,8 @@
 #include <iostream>
 #include <limits.h>
 #include <bitset>
+#include <queue>
+#include <stack>
 
 typedef unsigned long long ull;
 
@@ -16,16 +18,27 @@ void showBit(ull value) {
 }
 
 void showBoard(ull value) {
+    for(ull i=0; i<8; i++){
+        cout << bitset<8>( (value >> (7ull-i)*8ull)) << endl;
+    }
+    cout << endl;
+    return;
+    /*
+    string str = std::bitset<sizeof(ull) * CHAR_BIT>(value).to_string<char, std::char_traits<char>, std::allocator<char> >();
+    cout << str << endl;
+
     //上位ビットから
+    cout.clear();
+    stringstream ss;
     auto board = bitset<sizeof(ull) * CHAR_BIT>(value);
-    for (int i = board.size() - 1; i >= 0;) {
+    for (int i = str.size() - 1; i >= 0;) {
         for (int j = 0; j < 8; j++) {
-            cout << board[i - j];
+            ss << str[i - j];
         }
-        cout << "\n";
+        ss << endl;
         i -= 8;
     }
-    cout << "\n";
+    cout << ss.str() << endl;*/
 }
 
 class Board {
@@ -90,20 +103,27 @@ public:
             cout << "座標入力待ち(a～h1～8):";
             cin >> x >> y;
             yi = ctoi(y);
-            if(!canPut(makeBoard(x,yi))){
-                cout << "設置不可場所です" << endl;
-            }else if ('a' <= x && x <= 'h' && 0 <= yi && yi <= 8) {
+            if ('a' <= x && x <= 'h' && 0 <= yi && yi <= 8) {
+                if (!canPut(makeBoard(x, yi))) {
+                    cout << "設置不可場所です" << endl;
+
+                    continue;
+                }
                 break;
+            }else{
+                cin.clear();
+                cin.seekg(0);
+                cout << "re input" << endl;
             }
         }
         if (blackTurn) putBlack(makeBoard(x, yi));
         else putWhite(makeBoard(x, yi));
     }
 
-    bool canPut(ull pos){
-        if(blackTurn){
+    bool canPut(ull pos) {
+        if (blackTurn) {
             return (canBlackBoard & pos) != 0;
-        }else{
+        } else {
             return (canWhiteBoard & pos) != 0;
         }
     }
@@ -135,9 +155,10 @@ public:
         }
         return makeBoard(x - 'a', y - 1);
     }
-
+/*
     //y列目のおける場所
     ull getPutLine(ull myBoard, ull enemyBoard, int y) {
+        /*
         y = 7 - y;    //上位ビットがy==0なので
         myBoard = myBoard >> ((8 * y));
         enemyBoard = enemyBoard >> (8 * y);
@@ -146,15 +167,34 @@ public:
         uint8_t m = myBoard << 1;
         uint8_t e = enemyBoard;
         return ((ull) (~(m | e) & ~(myBoard | enemyBoard) & (m + e))) << ((8 * y));
-    }
 
+        //左側方向の処理
+        ull w = white & 0x7e7e7e7e7e7e7e7e; //端の1列が0、それ以外は1な盤面
+        ull t = w & (black << 1);           //黒石の左隣にある白石を調べる
+        t |= w & (t << 1);                  //その隣の
+        t |= w & (t << 1);                  //隣の・・・
+        t |= w & (t << 1);
+        t |= w & (t << 1);
+        t |= w & (t << 1);                    //一度にひっくり返せる石は6つまで
+        ull blank = ~(black | white);       // 空白の箇所
+        ull mobility = blank & (t << 1);    //着手出来るのは空白のマスだけ
+        return mobility;
+    }
+*/
     //右から左にみて置ける場所を探索
     ull getPutRtoL(ull myBoard, ull enemyBoard) {
         ull sum = 0;
-        for (int i = 0; i < 8; i++) {
-            sum = sum | getPutLine(myBoard, enemyBoard, i);
-        }
-        return sum;
+        //左側方向の処理
+        ull w = enemyBoard & 0x7e7e7e7e7e7e7e7e; //端の1列が0、それ以外は1な盤面
+        ull t = w & (myBoard << 1);           //黒石の左隣にある白石を調べる
+        t |= w & (t << 1);                  //その隣の
+        t |= w & (t << 1);                  //隣の・・・
+        t |= w & (t << 1);
+        t |= w & (t << 1);
+        t |= w & (t << 1);                    //一度にひっくり返せる石は6つまで
+        ull blank = ~(myBoard | enemyBoard);       // 空白の箇所
+        ull mobility = blank & (t << 1);    //着手出来るのは空白のマスだけ
+        return mobility;
     }
 
     //斜め方向のおける場所
@@ -262,9 +302,11 @@ public:
 
     //自分を黒としたときのおける場所(8方向
     ull getPutBlack() {
+        cout << "getput" << endl;
         ull sum = 0ull;
         //4方向
         sum = sum | getPutRtoL(black, white);
+
         //回転
         ull black2 = black;
         ull white2 = white;
@@ -420,19 +462,125 @@ public:
     ull cnt() {
         return cntBits((black | white));
     }
+
+    //横になければtrue
+    bool checkSideFree(ull pos) {
+        ull mask = 0x8181818181818181;
+        return (pos & mask) == 0;
+    }
+
+    //上下の辺に位置してたらtrue
+    bool checkUpSideNow(ull pos) {
+        ull mask = 0xff000000000000ff;
+        return (pos & mask) == 0;
+    }
+
+    //posの座標から左右にビットを立てる
+    ull sideUpBit(ull pos) {
+        ull sideLMask = 0x8080808080808080;
+        ull sideRMask = 0x0101010101010101;
+        ull tmp;
+        ull sum = pos;  //結果
+        tmp = pos & ~sideLMask;  //左辺にある箇所を排除
+        sum |= tmp << 1ull;     //左シフト
+        tmp = pos & ~sideRMask;
+        sum |= tmp >> 1ull;     //右シフト
+        return sum;
+    }
+
+    //指定した場所の周りの空きマスの場所取得
+    ull getAroundFree(ull pos) {
+        //右シフト、左シフト, -8, +8
+        ull sideLMask = 0x8080808080808080;
+        ull sideRMask = 0x0101010101010101;
+        ull sideUMask = 0xff00000000000000;
+        ull sideDMask = 0x00000000000000ff;
+        ull tmp;
+        ull sum = pos;  //結果
+        sum |= sideUpBit(pos);  //中心左右
+
+        tmp = pos & ~sideUMask;
+        tmp = tmp << 8ull;
+        sum |= sideUpBit(tmp);  //上
+
+        tmp = pos & ~sideDMask;
+        tmp |= tmp >> 8ull;
+        sum |= sideUpBit(tmp);  //下
+        sum = sum & getFree();
+        return sum;
+    }
+
+    int cntAroundFree(ull pos) {
+        return cntBits(getAroundFree(pos));
+    }
+
+    //開放度探索
+    void openMinSearch() {
+        stack<int> stc; //下位から開放度を積み上げてく
+        ull canPut, tmpPut;
+        ull myBoard, enBoard;
+        if (blackTurn) {
+            canPut = canBlackBoard;
+            myBoard = black;
+            enBoard = white;
+        } else {
+            canPut = canWhiteBoard;
+            myBoard = white;
+            enBoard = black;
+        }
+        cout << "解法" << endl;
+        showBoard(canPut);
+        while (true) {
+            if (canPut == 0) break; //何処もたってないなら終了
+            tmpPut = canPut & -canPut;//右の立ってるビット取り出し
+            int cnt = cntAroundFree(makeReverse(myBoard, enBoard, tmpPut));
+            stc.push(cnt);
+
+            canPut = canPut & ~tmpPut;
+        }
+        cout << "開放度" << endl;
+        while (!stc.empty()) {
+            cout << stc.top() << " ";
+            stc.pop();
+        }
+        cout << endl;
+    }
 };
 
 int ctoi(char c) {
     if (c >= '0' && c <= '9') {
         return c - '0';
     }
-    return 0;
+    return -1;
+}
+
+int inputNum(int mn, int mx) {
+    int tmp;
+    while (true) {
+        cin >> tmp;
+        if (tmp >= mn && tmp <= mx) {
+            return tmp;
+        } else {
+            cout << "入力をやりなおしてください" << endl;
+            cin.clear();
+            cin.seekg(0);
+        }
+    }
 }
 
 int main() {
+
+
     Board *board = new Board;
-    board->black = 0x002002045C0C0000;
-    board->white = 0x0010787820301000;
+    board->black = 0x0000181824020000;
+    board->white = 0x00000607183c0000;
+    //showBoard(board->getPutRtoL(board->black, board->white));
+    showBoard(board->getPutBlack());
+
+    cout << "put" << endl;
+    board->reloadCanBoard();
+    board->openMinSearch();
+
 
     cout << board->cnt() << endl;
     showBoard(board->black);
@@ -440,11 +588,28 @@ int main() {
     //showBit(board->getPutLine(board->black, board->white, 7));
 
     board->init();
+    showBoard(board->black);
+    cout.flush();
+    cout.clear();
+    cin.clear();/*
     while (true) {
+        cout << "開放度探索:1, 設置:2" << endl;
+        int tmp=0;
+        //tmp = inputNum(1, 2);
+        if (tmp == 1) {
+            board->openMinSearch();
+        }
+        board->openMinSearch();
         board->inputAndPut();
         board->nextTurn();
-    }
 
+        showBoard(board->getPutBlack());
+        cout.flush();
+        cout.clear();
+        cin.clear();
+
+    }
+*/
     return 0;
 }
 //https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating

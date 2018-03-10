@@ -8,13 +8,13 @@ class Board;
 
 using namespace std;
 
-//2é€²æ•°è¡¨ç¤º
+//2i”•\¦
 void showBit(ull value) {
     cout << bitset<sizeof(ull) * CHAR_BIT>(value) << endl;
 }
 
 void showBoard(ull value) {
-    //ä¸Šä½ãƒ“ãƒƒãƒˆã‹ã‚‰
+    //ãˆÊƒrƒbƒg‚©‚ç
     auto board = bitset<sizeof(ull) * CHAR_BIT>(value);
     for (int i = board.size() - 1; i >= 0;) {
         for (int j = 0; j < 8; j++) {
@@ -29,14 +29,14 @@ void showBoard(ull value) {
 class Board {
 
 public:
-    bool blackTurn = true;  //é€šå¸¸é»’ã‹ã‚‰
+    bool blackTurn = true;  //’Êí•‚©‚ç
     int nowTurn=0;
 
     ull black=0;
     ull white=0;
     ull canBlackBoard = 0, canWhiteBoard = 0;
 
-    //åˆæœŸåŒ–
+    //‰Šú‰»
     void init(){
         white = 68853694464;
         black = 34628173824;
@@ -60,35 +60,35 @@ public:
             cout << "fin" << endl;
         }
         reloadCanBoard();
-        if (blackTurn) { //ç™½ã‚¿ãƒ¼ãƒ³ã«
+        if (blackTurn) { //”’ƒ^[ƒ“‚É
             if(canWhiteBoard==0){
-                cout << "ç™½ãƒ‘ã‚¹" << endl;
+                cout << "”’ƒpƒX" << endl;
                 blackTurn = true;
             }
             blackTurn = false;
-            cout << "ç™½ã‚¿ãƒ¼ãƒ³" << endl;
+            cout << "”’ƒ^[ƒ“" << endl;
         } else {
             if(canBlackBoard==0){
-                cout << "é»’ãƒ‘ã‚¹" << endl;
+                cout << "•ƒpƒX" << endl;
                 blackTurn = false;
             }
             blackTurn = true;
-            cout << "é»’ã‚¿ãƒ¼ãƒ³" << endl;
+            cout << "•ƒ^[ƒ“" << endl;
         }
     }
 
-    //çŸ³ãŒç½®ã‹ã‚Œã¦ãªã„å ´æ‰€ã‚’è¿”ã™
+    //Î‚ª’u‚©‚ê‚Ä‚È‚¢êŠ‚ğ•Ô‚·
     ull getFree() {
         return ~(black | white);
     }
 
-    //ç©ºç™½ãŒã‚ã‚‹ã‹
+    //‹ó”’‚ª‚ ‚é‚©
     bool isFull() {
         return !getFree();
     }
 
-    //æŒ‡å®šã—ãŸåº§æ¨™ã‚’1ã«ã—ã¦è¿”ã™
-    //å·¦ä¸Š(0,0)â†’å³ä¸Š(0,7)
+    //w’è‚µ‚½À•W‚ğ1‚É‚µ‚Ä•Ô‚·
+    //¶ã(0,0)¨‰Eã(0,7)
     ull makeBoard(int x, int y) {
         if (x < 0 || x > 7 || y < 0 || y > 7) {
             cout << "err" << endl;
@@ -105,9 +105,9 @@ public:
         return makeBoard(x - 'a', y - 1);
     }
 
-    //yåˆ—ç›®ã®ãŠã‘ã‚‹å ´æ‰€
+    //y—ñ–Ú‚Ì‚¨‚¯‚éêŠ
     ull getPutLine(ull myBoard, ull enemyBoard, int y) {
-        y = 7 - y;    //ä¸Šä½ãƒ“ãƒƒãƒˆãŒy==0ãªã®ã§
+        y = 7 - y;    //ãˆÊƒrƒbƒg‚ªy==0‚È‚Ì‚Å
         myBoard = myBoard >> ((8 * y));
         enemyBoard = enemyBoard >> (8 * y);
         //showBit(myBoard);
@@ -117,7 +117,7 @@ public:
         return ((ull) (~(m | e) & ~(myBoard | enemyBoard) & (m + e))) << ((8 * y));
     }
 
-    //å³ã‹ã‚‰å·¦ã«ã¿ã¦ç½®ã‘ã‚‹å ´æ‰€ã‚’æ¢ç´¢
+    //‰E‚©‚ç¶‚É‚İ‚Ä’u‚¯‚éêŠ‚ğ’Tõ
     ull getPutRtoL(ull myBoard, ull enemyBoard) {
         ull sum = 0;
         for (int i = 0; i < 8; i++) {
@@ -126,10 +126,10 @@ public:
         return sum;
     }
 
-    //æ–œã‚æ–¹å‘ã®ãŠã‘ã‚‹å ´æ‰€
+    //Î‚ß•ûŒü‚Ì‚¨‚¯‚éêŠ
     ull getPutSlash(ull myBoard, ull enemyBoard) {
         ull sum = 0;
-        // å³ä¸Šæ–¹å‘
+        // ‰Eã•ûŒü
         ull masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
         ull t = masked_enemy & (myBoard << 7);
         for (int i = 0; i < 5; i++) {
@@ -137,7 +137,7 @@ public:
         }
         sum |= (t << 7);
 
-        // å·¦ä¸Šæ–¹å‘
+        // ¶ã•ûŒü
         masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
         t = masked_enemy & (myBoard << 9);
         for (int i = 0; i < 5; i++) {
@@ -145,7 +145,7 @@ public:
         }
         sum |= (t << 9);
 
-        // å³ä¸‹æ–¹å‘
+        // ‰E‰º•ûŒü
         masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
         t = masked_enemy & (myBoard >> 9);
         for (int i = 0; i < 5; i++) {
@@ -153,7 +153,7 @@ public:
         }
         sum |= (t >> 9);
 
-        // å·¦ä¸‹æ–¹å‘
+        // ¶‰º•ûŒü
         masked_enemy = enemyBoard & 0x007e7e7e7e7e7e00;
         t = masked_enemy & (myBoard >> 7);
         for (int i = 0; i < 5; i++) {
@@ -178,7 +178,7 @@ public:
         return (x << 1) & 0xfefefefefefefefeULL;
     }
 
-    //å¯¾è§’ç·šä¸Šã«å›è»¢(ä¸Šä¸‹åè»¢ã‹ã‚‰ã®å·¦90)
+    //‘ÎŠpüã‚É‰ñ“](ã‰º”½“]‚©‚ç‚Ì¶90)
     ull flipDiagA1H8(ull x) {
         ull t;
         const ull k1 = 0x5500550055005500;
@@ -193,7 +193,7 @@ public:
         return x;
     }
 
-    //ä¸Šä¸‹åè»¢
+    //ã‰º”½“]
     ull flipVertical(ull x) {
         return ((x << 56)) |
                ((x << 40) & 0x00ff000000000000) |
@@ -229,12 +229,12 @@ public:
     }
 
 
-    //è‡ªåˆ†ã‚’é»’ã¨ã—ãŸã¨ãã®ãŠã‘ã‚‹å ´æ‰€(8æ–¹å‘
+    //©•ª‚ğ•‚Æ‚µ‚½‚Æ‚«‚Ì‚¨‚¯‚éêŠ(8•ûŒü
     ull getPutBlack() {
         ull sum = 0ull;
-        //4æ–¹å‘
+        //4•ûŒü
         sum = sum | getPutRtoL(black, white);
-        //å›è»¢
+        //‰ñ“]
         ull black2 = black;
         ull white2 = white;
         for (int i = 0; i < 3; i++) {
@@ -248,15 +248,15 @@ public:
                 sum = sum | rotationR90(getPutRtoL(black2, white2));
             }
         }
-        return sum | getPutSlash(black, white);//8æ–¹å‘
+        return sum | getPutSlash(black, white);//8•ûŒü
     }
 
-    //è‡ªåˆ†ã‚’ç™½ã¨ã—ãŸã¨ãã®ãŠã‘ã‚‹å ´æ‰€
+    //©•ª‚ğ”’‚Æ‚µ‚½‚Æ‚«‚Ì‚¨‚¯‚éêŠ
     ull getPutWhite() {
         ull sum = 0ull;
-        //4æ–¹å‘
+        //4•ûŒü
         sum = sum | getPutRtoL(white, black);
-        //å›è»¢
+        //‰ñ“]
         ull black2 = black;
         ull white2 = white;
         for (int i = 0; i < 3; i++) {
@@ -270,16 +270,16 @@ public:
                 sum = sum | rotationR90(getPutRtoL(white2, black2));
             }
         }
-        return sum | getPutSlash(white, black);//8æ–¹å‘
+        return sum | getPutSlash(white, black);//8•ûŒü
     }
 
-    //çŸ³ã‚’åè»¢ã•ã›ã‚‹
-    //posã§ç½®ãå ´æ‰€æŒ‡å®š
+    //Î‚ğ”½“]‚³‚¹‚é
+    //pos‚Å’u‚­êŠw’è
     ull makeReverse(ull myBoard, ull enemyBoard, ull pos) {
         int i;
         ull mask, rev = 0, rev_cand;
 
-        // å³æ–¹å‘
+        // ‰E•ûŒü
         rev_cand = 0;
         mask = 0x7e7e7e7e7e7e7e7e;
         for (i = 1; ((pos >> i) & mask & enemyBoard) != 0; i++) {
@@ -287,7 +287,7 @@ public:
         }
         if (((pos >> i) & myBoard) != 0) rev |= rev_cand;
 
-        // å·¦æ–¹å‘
+        // ¶•ûŒü
         rev_cand = 0;
         mask = 0x7e7e7e7e7e7e7e7e;
         for (i = 1; ((pos << i) & mask & enemyBoard) != 0; i++) {
@@ -295,7 +295,7 @@ public:
         }
         if (((pos << i) & myBoard) != 0) rev |= rev_cand;
 
-        // ä¸Šæ–¹å‘
+        // ã•ûŒü
         rev_cand = 0;
         mask = 0x00ffffffffffff00;
         for (i = 1; ((pos << 8 * i) & mask & enemyBoard) != 0; i++) {
@@ -303,7 +303,7 @@ public:
         }
         if (((pos << 8 * i) & myBoard) != 0) rev |= rev_cand;
 
-        // ä¸‹æ–¹å‘
+        // ‰º•ûŒü
         rev_cand = 0;
         mask = 0x00ffffffffffff00;
         for (i = 1; ((pos >> 8 * i) & mask & enemyBoard) != 0; i++) {
@@ -311,7 +311,7 @@ public:
         }
         if (((pos >> 8 * i) & myBoard) != 0) rev |= rev_cand;
 
-        // å³ä¸Šæ–¹å‘
+        // ‰Eã•ûŒü
         rev_cand = 0;
         mask = 0x007e7e7e7e7e7e00;
         for (i = 1; ((pos << 7 * i) & mask & enemyBoard) != 0; i++) {
@@ -319,7 +319,7 @@ public:
         }
         if (((pos << 7 * i) & myBoard) != 0) rev |= rev_cand;
 
-        // å·¦ä¸Šæ–¹å‘
+        // ¶ã•ûŒü
         rev_cand = 0;
         mask = 0x007e7e7e7e7e7e00;
         for (i = 1; ((pos << 9 * i) & mask & enemyBoard) != 0; i++) {
@@ -327,7 +327,7 @@ public:
         }
         if (((pos << 9 * i) & myBoard) != 0) rev |= rev_cand;
 
-        // å³ä¸‹æ–¹å‘
+        // ‰E‰º•ûŒü
         rev_cand = 0;
         mask = 0x007e7e7e7e7e7e00;
         for (i = 1; ((pos >> 9 * i) & mask & enemyBoard) != 0; i++) {
@@ -335,7 +335,7 @@ public:
         }
         if (((pos >> 9 * i) & myBoard) != 0) rev |= rev_cand;
 
-        // å·¦ä¸‹æ–¹å‘
+        // ¶‰º•ûŒü
         rev_cand = 0;
         mask = 0x007e7e7e7e7e7e00;
         for (i = 1; ((pos >> 7 * i) & mask & enemyBoard) != 0; i++) {
@@ -346,14 +346,14 @@ public:
         return rev;
     }
 
-    //çŸ³ã®è¨­ç½®ï¼ˆãƒªãƒãƒ¼ã‚¹ã‚ã‚Š,ãƒã‚§ãƒƒã‚¯ç„¡ã—
+    //Î‚Ìİ’uiƒŠƒo[ƒX‚ ‚è,ƒ`ƒFƒbƒN–³‚µ
     void putBlack(ull pos) {
         ull putBoard = makeReverse(black, white, pos);
         black |= putBoard | pos;
         white ^= putBoard;
     }
 
-    //çŸ³ã®è¨­ç½®ï¼ˆãƒªãƒãƒ¼ã‚¹ã‚ã‚Š,ãƒã‚§ãƒƒã‚¯ç„¡ã—
+    //Î‚Ìİ’uiƒŠƒo[ƒX‚ ‚è,ƒ`ƒFƒbƒN–³‚µ
     void putWhite(ull pos) {
         ull putBoard = makeReverse(white, black, pos);
         white |= putBoard | pos;

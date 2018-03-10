@@ -30,12 +30,23 @@ class Board {
 
 public:
     bool blackTurn = true;  //通常黒から
-    int nowTurn;
-    int nowIdx;
+    int nowTurn=0;
 
-    ull black;
-    ull white;
+    ull black=0;
+    ull white=0;
     ull canBlackBoard = 0, canWhiteBoard = 0;
+
+    //初期化
+    void init(){
+        white = 68853694464;
+        black = 34628173824;
+
+        blackTurn = true;
+        nowTurn = 0;
+        reloadCanBoard();
+        cout << "init" << endl;
+
+    }
 
 
     void reloadCanBoard() {
@@ -45,15 +56,24 @@ public:
 
     void nextTurn() {
         nowTurn++;
-        nowIdx++;
         if (black | white == ULLONG_MAX) {
             cout << "fin" << endl;
         }
-
-        if (blackTurn) {
+        reloadCanBoard();
+        if (blackTurn) { //白ターンに
+            if(canWhiteBoard==0){
+                cout << "白パス" << endl;
+                blackTurn = true;
+            }
             blackTurn = false;
+            cout << "白ターン" << endl;
         } else {
+            if(canBlackBoard==0){
+                cout << "黒パス" << endl;
+                blackTurn = false;
+            }
             blackTurn = true;
+            cout << "黒ターン" << endl;
         }
     }
 
@@ -378,14 +398,11 @@ int main() {
 
     cout << board->cnt() << endl;
     showBoard(board->black);
-    //showBit(board->getPutLine(board->black, board->white, 7));
-    cout << endl;
-    board->reloadCanBoard();
-
-    showBoard(board->getPutBlack());
-    board->putBlack(0x0000000000000008);
     showBoard(board->white);
-    showBoard(board->makeBoard('a', 1));
+    //showBit(board->getPutLine(board->black, board->white, 7));
+
+    board->init();
+    board->nextTurn();
 
     return 0;
 }

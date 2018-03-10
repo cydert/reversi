@@ -8,6 +8,8 @@ class Board;
 
 using namespace std;
 
+int ctoi(char x);
+
 //2進数表示
 void showBit(ull value) {
     cout << bitset<sizeof(ull) * CHAR_BIT>(value) << endl;
@@ -30,14 +32,14 @@ class Board {
 
 public:
     bool blackTurn = true;  //通常黒から
-    int nowTurn=0;
+    int nowTurn = 0;
 
-    ull black=0;
-    ull white=0;
+    ull black = 0;
+    ull white = 0;
     ull canBlackBoard = 0, canWhiteBoard = 0;
 
     //初期化
-    void init(){
+    void init() {
         white = 68853694464;
         black = 34628173824;
 
@@ -56,24 +58,53 @@ public:
 
     void nextTurn() {
         nowTurn++;
-        if (black | white == ULLONG_MAX) {
+        if ((black | white) == ULLONG_MAX) {
             cout << "fin" << endl;
         }
         reloadCanBoard();
         if (blackTurn) { //白ターンに
-            if(canWhiteBoard==0){
+            if (canWhiteBoard == 0) {
                 cout << "白パス" << endl;
                 blackTurn = true;
             }
             blackTurn = false;
             cout << "白ターン" << endl;
         } else {
-            if(canBlackBoard==0){
+            if (canBlackBoard == 0) {
                 cout << "黒パス" << endl;
                 blackTurn = false;
             }
             blackTurn = true;
             cout << "黒ターン" << endl;
+        }
+        showBoard(black | white);
+
+    }
+
+    void inputAndPut() {
+        char x, y;
+        if (blackTurn) cout << "黒ターン" << endl;
+        else cout << "白ターン" << endl;
+        int yi;
+        while (true) {
+            cout << "座標入力待ち(a～h1～8):";
+            cin >> x >> y;
+            yi = ctoi(y);
+            if(!canPut(makeBoard(x,yi))){
+                cout << "設置不可場所です" << endl;
+            }else if ('a' <= x && x <= 'h' && 0 <= yi && yi <= 8) {
+                break;
+            }
+        }
+        if (blackTurn) putBlack(makeBoard(x, yi));
+        else putWhite(makeBoard(x, yi));
+    }
+
+    bool canPut(ull pos){
+        if(blackTurn){
+            return (canBlackBoard & pos) != 0;
+        }else{
+            return (canWhiteBoard & pos) != 0;
         }
     }
 
@@ -391,6 +422,13 @@ public:
     }
 };
 
+int ctoi(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    return 0;
+}
+
 int main() {
     Board *board = new Board;
     board->black = 0x002002045C0C0000;
@@ -402,7 +440,10 @@ int main() {
     //showBit(board->getPutLine(board->black, board->white, 7));
 
     board->init();
-    board->nextTurn();
+    while (true) {
+        board->inputAndPut();
+        board->nextTurn();
+    }
 
     return 0;
 }
